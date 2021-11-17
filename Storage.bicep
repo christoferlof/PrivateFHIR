@@ -10,7 +10,12 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
     name:'Standard_LRS'
   }
   kind:'StorageV2'
-  
+  properties: {
+    networkAcls: {
+      bypass:'None'
+      defaultAction: 'Deny'
+    }
+  }
 }
 
 var vnetPrefix = '10.0.0.0/16'
