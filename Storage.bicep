@@ -100,3 +100,39 @@ resource peblobDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
     ]
   }
 }
+
+var fhirServerName = 'fhir${uniqueName}'
+
+resource pefhir 'Microsoft.Network/privateEndpoints@2021-03-01' = {
+  name: 'pefhir${uniqueName}'
+  location: location
+  properties: {
+    subnet: {
+      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, subnetName)
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'pefhirconnection'
+        properties: {
+          privateLinkServiceId: fhirServer.id
+          groupIds: [
+            'fhir'
+          ]
+        }
+      }
+    ]
+  }
+}
+
+resource fhirServer 'Microsoft.HealthcareApis/services@2021-01-11' = {
+  name: fhirServerName
+  location: location
+  kind: 'fhir-R4'
+  properties: {
+    authenticationConfiguration: {
+      audience: 'https://${fhirServerName}.azurehealthcareapis.com'
+      authority: uri(environment().authentication.loginEndpoint, subscription().tenantId)
+    }
+    publicNetworkAccess: 'Disabled'
+  }
+}
