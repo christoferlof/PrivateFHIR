@@ -125,16 +125,51 @@ resource pefhir 'Microsoft.Network/privateEndpoints@2021-03-01' = {
   }
 }
 
+var fhirDnsZoneName = 'privatelink.azurehealthcareapis.com'
+var fhirAudience = 'https://${fhirServerName}.azurehealthcareapis.com'
+
 resource fhirServer 'Microsoft.HealthcareApis/services@2021-01-11' = {
   name: fhirServerName
   location: location
   kind: 'fhir-R4'
   properties: {
     authenticationConfiguration: {
-      audience: 'https://${fhirServerName}.azurehealthcareapis.com'
+      audience: fhirAudience
       authority: uri(environment().authentication.loginEndpoint, subscription().tenantId)
     }
     publicNetworkAccess: 'Disabled'
+  }
+}
+
+resource fhirDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+  name: fhirDnsZoneName
+  location: 'global'
+}
+
+resource fhirDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
+  parent: fhirDnsZone
+  name: '${fhirDnsZone.name}-link'
+  location: 'global'
+  properties: {
+    registrationEnabled: false
+    virtualNetwork: {
+      id: vnet.id
+    }
+  }
+}
+
+resource fhirDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-03-01' = {
+  parent: pefhir
+  name: 'fhirdnsgroups${uniqueName}'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: 'config'
+        properties: {
+          privateDnsZoneId: fhirDnsZone.id
+        }
+      }
+    ]
   }
 }
 
