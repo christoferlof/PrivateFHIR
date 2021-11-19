@@ -102,13 +102,14 @@ resource peblobDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGr
 }
 
 var fhirServerName = 'fhir${uniqueName}'
+var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, subnetName)
 
 resource pefhir 'Microsoft.Network/privateEndpoints@2021-03-01' = {
   name: 'pefhir${uniqueName}'
   location: location
   properties: {
     subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, subnetName)
+      id: subnetRef
     }
     privateLinkServiceConnections: [
       {
@@ -136,3 +137,5 @@ resource fhirServer 'Microsoft.HealthcareApis/services@2021-01-11' = {
     publicNetworkAccess: 'Disabled'
   }
 }
+
+output subnetRef string = subnetRef

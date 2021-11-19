@@ -15,3 +15,19 @@ module storageModule 'Storage.bicep' = {
     uniqueName: subscriptionUnique
   }
 }
+
+param adminUsername string
+@secure()
+param adminPassword string
+
+module vmModule 'Vm.bicep' = {
+  scope: rg
+  name: 'vmModule'
+  params: {
+    adminPassword: adminPassword
+    adminUsername: adminUsername
+    location: location
+    subnetId: storageModule.outputs.subnetRef
+    uniqueName: subscriptionUnique
+  }
+}
