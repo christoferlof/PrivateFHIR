@@ -34,7 +34,7 @@ resource vmNsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
         properties: {
           protocol: 'Tcp'
           priority: 1000
-          access: 'Allow'
+          access: 'Deny'
           direction: 'Inbound'
           sourceAddressPrefix: '*'
           sourcePortRange: '*'
