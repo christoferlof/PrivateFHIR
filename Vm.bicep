@@ -27,23 +27,6 @@ resource vmIp 'Microsoft.Network/publicIPAddresses@2021-03-01' = {
 resource vmNsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   name: '${vmName}nsg'
   location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'ssh'
-        properties: {
-          protocol: 'Tcp'
-          priority: 1000
-          access: 'Deny'
-          direction: 'Inbound'
-          sourceAddressPrefix: '*'
-          sourcePortRange: '*'
-          destinationAddressPrefix: '*'
-          destinationPortRange: '22'
-        }
-      }
-    ]
-  }
 }
 
 resource vmNic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
