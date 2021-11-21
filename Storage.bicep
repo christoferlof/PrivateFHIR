@@ -20,6 +20,23 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
+var storageBlobContributorRoleDefId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+
+resource roleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  name: storageBlobContributorRoleDefId
+}
+
+var fhirStorageRoleAssignmentName = guid(uniqueName, storageBlobContributorRoleDefId)
+
+resource fhirStorageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+  name: fhirStorageRoleAssignmentName
+  scope: storage
+  properties: {
+    principalId: fhirServer.identity.principalId
+    roleDefinitionId: roleDefinition.id
+  }
+}
+
 var vnetPrefix = '10.0.0.0/16'
 var vnetName = 'vnet${uniqueName}'
 var subnetPrefix = '10.0.0.0/24'
