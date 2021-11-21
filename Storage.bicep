@@ -132,12 +132,18 @@ resource fhirServer 'Microsoft.HealthcareApis/services@2021-01-11' = {
   name: fhirServerName
   location: location
   kind: 'fhir-R4'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
     authenticationConfiguration: {
       audience: fhirAudience
       authority: uri(environment().authentication.loginEndpoint, subscription().tenantId)
     }
     publicNetworkAccess: 'Disabled'
+    exportConfiguration: {
+      storageAccountName: storageName
+    }
   }
 }
 
