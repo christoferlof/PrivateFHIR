@@ -20,23 +20,6 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-var storageBlobContributorRoleDefId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-
-resource roleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
-  name: storageBlobContributorRoleDefId
-}
-
-var fhirStorageRoleAssignmentName = guid(uniqueName, storageBlobContributorRoleDefId)
-
-resource fhirStorageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
-  name: fhirStorageRoleAssignmentName
-  scope: storage
-  properties: {
-    principalId: fhirServer.identity.principalId
-    roleDefinitionId: roleDefinition.id
-  }
-}
-
 var vnetPrefix = '10.0.0.0/16'
 var vnetName = 'vnet${uniqueName}'
 var subnetPrefix = '10.0.0.0/24'
@@ -63,86 +46,46 @@ resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = {
   }
 }
 
-resource peblob 'Microsoft.Network/privateEndpoints@2021-03-01' = {
-  name: 'peblob${uniqueName}'
-  location: location
-  properties: {
-    subnet: {
-      id: resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, subnetName)
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'peblobconnection'
-        properties: {
-          privateLinkServiceId: storage.id
-          groupIds: [
-            'blob'
-          ]
-        }
-      }
-    ]
-  }
-}
-
 var storageBlobDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}'
 
-resource storageBlobDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: storageBlobDnsZoneName
-  location: 'global'
-}
-
-resource peblobDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: storageBlobDnsZone
-  name: '${storageBlobDnsZone.name}-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: vnet.id
-    }
-  }
-}
-
-resource peblobDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-03-01' = {
-  parent: peblob
-  name: 'peblobdnsgroups${uniqueName}'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config'
-        properties: {
-          privateDnsZoneId: storageBlobDnsZone.id
-        }
-      }
+module storagePrivateEndpoint 'PrivateEndpoint.bicep' = {
+  name: 'storagePrivateEndpoint'
+  params: {
+    dnsZoneName: storageBlobDnsZoneName
+    location: location
+    prefix: 'blob'
+    privateLinkGroupIds: [
+      'blob'
     ]
+    privateLinkServiceId: storage.id
+    subnetName: subnetName
+    uniqueName: uniqueName
+    vnetId: vnet.id
+    vnetName: vnet.name
   }
 }
 
 var fhirServerName = 'fhir${uniqueName}'
 var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, subnetName)
+var fhirDnsZoneName = 'privatelink.azurehealthcareapis.com'
 
-resource pefhir 'Microsoft.Network/privateEndpoints@2021-03-01' = {
-  name: 'pefhir${uniqueName}'
-  location: location
-  properties: {
-    subnet: {
-      id: subnetRef
-    }
-    privateLinkServiceConnections: [
-      {
-        name: 'pefhirconnection'
-        properties: {
-          privateLinkServiceId: fhirServer.id
-          groupIds: [
-            'fhir'
-          ]
-        }
-      }
+module fhirPrivateEndpoint 'PrivateEndpoint.bicep' = {
+  name: 'fhirPrivateEndpoint'
+  params: {
+    dnsZoneName: fhirDnsZoneName
+    location: location
+    prefix: 'fhir'
+    privateLinkGroupIds: [
+      'fhir'
     ]
+    privateLinkServiceId: fhirServer.id
+    subnetName: subnetName
+    uniqueName: uniqueName
+    vnetId: vnet.id
+    vnetName: vnet.name
   }
 }
 
-var fhirDnsZoneName = 'privatelink.azurehealthcareapis.com'
 var fhirAudience = 'https://${fhirServerName}.azurehealthcareapis.com'
 
 resource fhirServer 'Microsoft.HealthcareApis/services@2021-01-11' = {
@@ -164,35 +107,20 @@ resource fhirServer 'Microsoft.HealthcareApis/services@2021-01-11' = {
   }
 }
 
-resource fhirDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: fhirDnsZoneName
-  location: 'global'
+var storageBlobContributorRoleDefId = 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+
+resource roleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  name: storageBlobContributorRoleDefId
 }
 
-resource fhirDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: fhirDnsZone
-  name: '${fhirDnsZone.name}-link'
-  location: 'global'
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: vnet.id
-    }
-  }
-}
+var fhirStorageRoleAssignmentName = guid(uniqueName, storageBlobContributorRoleDefId)
 
-resource fhirDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2021-03-01' = {
-  parent: pefhir
-  name: 'fhirdnsgroups${uniqueName}'
+resource fhirStorageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+  name: fhirStorageRoleAssignmentName
+  scope: storage
   properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'config'
-        properties: {
-          privateDnsZoneId: fhirDnsZone.id
-        }
-      }
-    ]
+    principalId: fhirServer.identity.principalId
+    roleDefinitionId: roleDefinition.id
   }
 }
 
