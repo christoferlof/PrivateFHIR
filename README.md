@@ -11,7 +11,7 @@ By deploying the Main.bicep template you'll get:
 * FHIR server managed identity added to Blob Contributors role, to be able to save exports.
 * Virtual network with one subnet.
 * Private endpoints for storage and FHIR server.
-* Ubuntu LTS-18.02 jumpbox, to be able to access storage and FHIR server.
+* Ubuntu LTS-18.04 jumpbox, to be able to access storage and FHIR server.
 
 To deploy this example run the following command:
 
