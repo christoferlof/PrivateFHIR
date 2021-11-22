@@ -1,12 +1,11 @@
-param uniqueName string
-param location string
+param deployment object
 param network object
 
-var storageName = 'sa${uniqueName}'
+var storageName = 'sa${deployment.uniqueName}'
 
 resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   name: storageName
-  location: location
+  location: deployment.location
   sku: {
     name:'Standard_LRS'
   }
@@ -21,42 +20,40 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-
-
 var storageBlobDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}'
 
 module storagePrivateEndpoint 'PrivateEndpoint.bicep' = {
-  name: 'storagePrivateEndpoint'
+  name: '${deployment.name}-storagePrivateEndpoint'
   params: {
     dnsZoneName: storageBlobDnsZoneName
-    location: location
+    location: deployment.location
     prefix: 'blob'
     privateLinkGroupIds: [
       'blob'
     ]
     privateLinkServiceId: storage.id
     subnetName: network.subnet.name
-    uniqueName: uniqueName
+    uniqueName: deployment.uniqueName
     vnetId: network.vnet.id
     vnetName: network.vnet.name
   }
 }
 
-var fhirServerName = 'fhir${uniqueName}'
+var fhirServerName = 'fhir${deployment.uniqueName}'
 var fhirDnsZoneName = 'privatelink.azurehealthcareapis.com'
 
 module fhirPrivateEndpoint 'PrivateEndpoint.bicep' = {
-  name: 'fhirPrivateEndpoint'
+  name: '${deployment.name}-fhirPrivateEndpoint'
   params: {
     dnsZoneName: fhirDnsZoneName
-    location: location
+    location: deployment.location
     prefix: 'fhir'
     privateLinkGroupIds: [
       'fhir'
     ]
     privateLinkServiceId: fhirServer.id
     subnetName: network.subnet.name
-    uniqueName: uniqueName
+    uniqueName: deployment.uniqueName
     vnetId: network.vnet.id
     vnetName: network.vnet.name
   }
@@ -66,7 +63,7 @@ var fhirAudience = 'https://${fhirServerName}.azurehealthcareapis.com'
 
 resource fhirServer 'Microsoft.HealthcareApis/services@2021-01-11' = {
   name: fhirServerName
-  location: location
+  location: deployment.location
   kind: 'fhir-R4'
   identity: {
     type: 'SystemAssigned'
@@ -89,7 +86,7 @@ resource roleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-prev
   name: storageBlobContributorRoleDefId
 }
 
-var fhirStorageRoleAssignmentName = guid(uniqueName, storageBlobContributorRoleDefId)
+var fhirStorageRoleAssignmentName = guid(deployment.uniqueName, storageBlobContributorRoleDefId)
 
 resource fhirStorageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
   name: fhirStorageRoleAssignmentName

@@ -1,14 +1,13 @@
-param uniqueName string
-param location string
+param deployment object
 
 var vnetPrefix = '10.0.0.0/16'
-var vnetName = 'vnet${uniqueName}'
+var vnetName = 'vnet${deployment.uniqueName}'
 var subnetPrefix = '10.0.0.0/24'
-var subnetName = 'subn${uniqueName}'
+var subnetName = 'subn${deployment.uniqueName}'
 
 resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = {
   name: vnetName
-  location: location
+  location: deployment.location
   properties: {
     addressSpace: {
       addressPrefixes: [ 

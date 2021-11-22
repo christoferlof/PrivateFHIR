@@ -1,27 +1,28 @@
 targetScope = 'subscription'
-var subscriptionUnique = take(uniqueString(subscription().subscriptionId),6)
-var location = 'northeurope'
+var context = {
+  uniqueName: take(uniqueString(subscription().subscriptionId),6)
+  location: deployment().location
+  name: deployment().name
+}
 
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: 'private-fhir-${subscriptionUnique}'
-  location: location
+  name: 'private-fhir-${context.uniqueName}'
+  location: context.location
 }
 
 module network 'Network.bicep' = {
   scope: rg
-  name: 'networkModule'
+  name: '${context.name}-networkModule'
   params: {
-    location: location
-    uniqueName: subscriptionUnique
+    deployment: context
   }
 }
 
 module fhirWithStorage 'FhirWithStorage.bicep' = {
   scope: rg
-  name: 'fhirWithStorageModule'
+  name: '${context.name}-fhirWithStorageModule'
   params: {
-    location: location
-    uniqueName: subscriptionUnique
+    deployment: context
     network: network.outputs.network
   }
 }
@@ -32,12 +33,11 @@ param adminPassword string
 
 module vmModule 'Vm.bicep' = {
   scope: rg
-  name: 'vmModule'
+  name: '${context.name}-vmModule'
   params: {
     adminPassword: adminPassword
     adminUsername: adminUsername
-    location: location
-    uniqueName: subscriptionUnique
+    deployment: context
     network: network.outputs.network
   }
 }

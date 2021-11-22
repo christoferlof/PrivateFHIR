@@ -1,15 +1,14 @@
-param uniqueName string
-param location string
+param deployment object
 param network object
 param adminUsername string
 @secure()
 param adminPassword string
 
-var vmName = 'vm${uniqueName}'
+var vmName = 'vm${deployment.uniqueName}'
 
 resource vmIp 'Microsoft.Network/publicIPAddresses@2021-03-01' = {
   name: '${vmName}ip'
-  location: location
+  location: deployment.location
   properties: {
     publicIPAddressVersion: 'IPv4'
     publicIPAllocationMethod: 'Dynamic'
@@ -26,12 +25,12 @@ resource vmIp 'Microsoft.Network/publicIPAddresses@2021-03-01' = {
 
 resource vmNsg 'Microsoft.Network/networkSecurityGroups@2021-03-01' = {
   name: '${vmName}nsg'
-  location: location
+  location: deployment.location
 }
 
 resource vmNic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
   name: '${vmName}nic'
-  location: location
+  location: deployment.location
   properties: {
     ipConfigurations: [
       {
@@ -55,7 +54,7 @@ resource vmNic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
 
 resource vm 'Microsoft.Compute/virtualMachines@2021-07-01' = {
   name: vmName
-  location: location
+  location: deployment.location
   properties: {
     hardwareProfile: {
       vmSize: 'Standard_A0'
