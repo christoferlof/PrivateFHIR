@@ -8,7 +8,7 @@ By deploying the Main.bicep template you'll get:
 * Azure API for FHIR on private network.
 * Storage account on private network.
 * Azure API for FHIR [configured to use the provisioned storage account](https://docs.microsoft.com/en-us/azure/healthcare-apis/data-transformation/configure-export-data) for `$export` operations.
-* FHIR server managed itentity added to Blob Contributors role, to be able to save exports.
+* FHIR server managed identity added to Blob Contributors role, to be able to save exports.
 * Virtual network with one subnet.
 * Private endpoints for storage and FHIR server.
 * Ubuntu LTS-18.02 jumpbox, to be able to access storage and FHIR server.
