@@ -1,5 +1,6 @@
 param uniqueName string
 param location string
+param network object
 
 var storageName = 'sa${uniqueName}'
 
@@ -20,31 +21,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-var vnetPrefix = '10.0.0.0/16'
-var vnetName = 'vnet${uniqueName}'
-var subnetPrefix = '10.0.0.0/24'
-var subnetName = 'subn${uniqueName}'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2021-03-01' = {
-  name: vnetName
-  location: location
-  properties: {
-    addressSpace: {
-      addressPrefixes: [ 
-         vnetPrefix
-      ]
-    }
-    subnets: [
-      {
-        name: subnetName
-        properties: {
-          privateEndpointNetworkPolicies: 'Disabled'
-          addressPrefix: subnetPrefix
-        }
-      }
-    ]
-  }
-}
 
 var storageBlobDnsZoneName = 'privatelink.blob.${environment().suffixes.storage}'
 
@@ -58,15 +35,14 @@ module storagePrivateEndpoint 'PrivateEndpoint.bicep' = {
       'blob'
     ]
     privateLinkServiceId: storage.id
-    subnetName: subnetName
+    subnetName: network.subnet.name
     uniqueName: uniqueName
-    vnetId: vnet.id
-    vnetName: vnet.name
+    vnetId: network.vnet.id
+    vnetName: network.vnet.name
   }
 }
 
 var fhirServerName = 'fhir${uniqueName}'
-var subnetRef = resourceId('Microsoft.Network/virtualNetworks/subnets', vnet.name, subnetName)
 var fhirDnsZoneName = 'privatelink.azurehealthcareapis.com'
 
 module fhirPrivateEndpoint 'PrivateEndpoint.bicep' = {
@@ -79,10 +55,10 @@ module fhirPrivateEndpoint 'PrivateEndpoint.bicep' = {
       'fhir'
     ]
     privateLinkServiceId: fhirServer.id
-    subnetName: subnetName
+    subnetName: network.subnet.name
     uniqueName: uniqueName
-    vnetId: vnet.id
-    vnetName: vnet.name
+    vnetId: network.vnet.id
+    vnetName: network.vnet.name
   }
 }
 
@@ -123,5 +99,3 @@ resource fhirStorageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-
     roleDefinitionId: roleDefinition.id
   }
 }
-
-output subnetRef string = subnetRef

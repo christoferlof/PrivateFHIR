@@ -1,6 +1,6 @@
 param uniqueName string
 param location string
-param subnetId string
+param network object
 param adminUsername string
 @secure()
 param adminPassword string
@@ -38,7 +38,7 @@ resource vmNic 'Microsoft.Network/networkInterfaces@2021-03-01' = {
         name: 'ipconfig'
         properties: {
           subnet: {
-            id: subnetId
+            id: network.subnet.id
           }
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {

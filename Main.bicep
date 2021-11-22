@@ -7,12 +7,22 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   location: location
 }
 
-module storageModule 'Storage.bicep' = {
+module network 'Network.bicep' = {
   scope: rg
-  name: 'storageModule'
+  name: 'networkModule'
   params: {
     location: location
     uniqueName: subscriptionUnique
+  }
+}
+
+module fhirWithStorage 'FhirWithStorage.bicep' = {
+  scope: rg
+  name: 'fhirWithStorageModule'
+  params: {
+    location: location
+    uniqueName: subscriptionUnique
+    network: network.outputs.network
   }
 }
 
@@ -27,7 +37,7 @@ module vmModule 'Vm.bicep' = {
     adminPassword: adminPassword
     adminUsername: adminUsername
     location: location
-    subnetId: storageModule.outputs.subnetRef
     uniqueName: subscriptionUnique
+    network: network.outputs.network
   }
 }
