@@ -18,12 +18,19 @@ module network 'Network.bicep' = {
   }
 }
 
+@description('Conditional assignment of authorization rules. Will only be assigned on new deployments.')
+@allowed([
+  'new'
+  'existing'
+])
+param newOrExisting string = 'new'
 module fhirWithStorage 'FhirWithStorage.bicep' = {
   scope: rg
   name: '${context.name}-fhirWithStorageModule'
   params: {
     deployment: context
     network: network.outputs.network
+    newOrExisting: newOrExisting
   }
 }
 

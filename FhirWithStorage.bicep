@@ -1,5 +1,10 @@
 param deployment object
 param network object
+@allowed([
+  'new'
+  'existing'
+])
+param newOrExisting string = 'new'
 
 var storageName = 'sa${deployment.uniqueName}'
 
@@ -14,6 +19,12 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
     networkAcls: {
       bypass:'None'
       defaultAction: 'Deny'
+      resourceAccessRules: [
+        {
+          tenantId: subscription().tenantId
+          resourceId: fhirServer.id
+        }
+      ]
     }
     minimumTlsVersion: 'TLS1_2'
     allowSharedKeyAccess: false
@@ -88,7 +99,7 @@ resource roleDefinition 'Microsoft.Authorization/roleDefinitions@2018-01-01-prev
 
 var fhirStorageRoleAssignmentName = guid(deployment.uniqueName, storageBlobContributorRoleDefId)
 
-resource fhirStorageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+resource fhirStorageRoleAssigment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = if (newOrExisting == 'new') {
   name: fhirStorageRoleAssignmentName
   scope: storage
   properties: {
